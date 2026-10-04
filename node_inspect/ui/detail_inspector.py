@@ -2,11 +2,12 @@
 
 import json
 from typing import Any, Optional
-from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal, QSize
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTabWidget,
-    QTableView, QPlainTextEdit, QPushButton, QHeaderView, QApplication
+    QTableView, QPlainTextEdit, QPushButton, QHeaderView, QApplication,
+    QSizePolicy
 )
 
 from node_inspect.ui.theme import COLORS, get_type_color
@@ -111,54 +112,80 @@ class NdarrayTableModel(QAbstractTableModel):
 class DetailInspectorWidget(QWidget):
     """Right pane widget to inspect selected node details."""
 
+    closed = Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.current_value: Any = None
+        # Allow flexible shrinking so contents do not force resize on parent splitter
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self._init_ui()
+
+    def sizeHint(self) -> QSize:
+        return QSize(360, 200)
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(120, 100)
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(8)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(4)
 
         # Header Info Bar
         header_bar = QHBoxLayout()
+        header_bar.setContentsMargins(2, 2, 2, 2)
+        header_bar.setSpacing(4)
+
         self.title_label = QLabel("Details", self)
-        self.title_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #ffffff;")
+        self.title_label.setStyleSheet("font-size: 11px; font-weight: bold; color: #ffffff;")
+        self.title_label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
 
         self.type_badge = QLabel("", self)
         self.type_badge.setStyleSheet(
-            "background-color: #333333; color: #4ec9b0; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 11px;"
+            "background-color: #333333; color: #4ec9b0; padding: 1px 5px; border-radius: 3px; font-weight: 600; font-size: 10px;"
         )
+        self.type_badge.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.type_badge.hide()
 
         self.summary_label = QLabel("", self)
-        self.summary_label.setStyleSheet("color: #858585; font-size: 12px;")
+        self.summary_label.setStyleSheet("color: #858585; font-size: 10px;")
+        # Ignored size policy prevents long labels from expanding the splitter width
+        self.summary_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
 
-        self.copy_btn = QPushButton("Copy Text", self)
-        self.copy_btn.setFixedSize(85, 24)
+        self.copy_btn = QPushButton("Copy", self)
+        self.copy_btn.setFixedSize(45, 20)
         self.copy_btn.setStyleSheet(
-            "background-color: #333333; border: 1px solid #444; border-radius: 3px; color: #ccc; font-size: 11px;"
+            "background-color: #333333; border: 1px solid #444; border-radius: 2px; color: #ccc; font-size: 10px; padding: 1px;"
         )
         self.copy_btn.clicked.connect(self._copy_content)
+
+        self.close_btn = QPushButton("✕", self)
+        self.close_btn.setFixedSize(20, 20)
+        self.close_btn.setToolTip("Close Panel")
+        self.close_btn.setStyleSheet(
+            "background-color: transparent; border: none; color: #858585; font-size: 11px; font-weight: bold;"
+        )
+        self.close_btn.clicked.connect(self._on_close_clicked)
 
         header_bar.addWidget(self.title_label)
         header_bar.addWidget(self.type_badge)
         header_bar.addWidget(self.summary_label)
-        header_bar.addStretch()
         header_bar.addWidget(self.copy_btn)
+        header_bar.addWidget(self.close_btn)
 
         layout.addLayout(header_bar)
 
         # Tab Widget for Table and Raw / Text view
         self.tab_widget = QTabWidget(self)
+        self.tab_widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
 
         # 1. Table View Tab
         self.table_view = QTableView(self)
         self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.table_view.horizontalHeader().setDefaultSectionSize(110)
-        self.table_view.verticalHeader().setDefaultSectionSize(24)
-        self.tab_widget.addTab(self.table_view, "Table View")
+        self.table_view.horizontalHeader().setDefaultSectionSize(80)
+        self.table_view.verticalHeader().setDefaultSectionSize(19)
+        self.tab_widget.addTab(self.table_view, "Table")
 
         # 2. Raw Text / JSON Tab
         self.text_edit = QPlainTextEdit(self)
@@ -167,17 +194,23 @@ class DetailInspectorWidget(QWidget):
 
         layout.addWidget(self.tab_widget)
 
+    def _on_close_clicked(self):
+        self.hide()
+        self.closed.emit()
+
     def display_node(self, key: str, value: Any, data_type: str, summary: str):
         """Update inspector with node information."""
         self.current_value = value
-        self.title_label.setText(f"Item: {key}")
+        self.title_label.setText(f"{key}")
         self.type_badge.setText(data_type)
         color = get_type_color(data_type)
         self.type_badge.setStyleSheet(
-            f"background-color: #2b2b2b; color: {color.name()}; border: 1px solid {color.name()}; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 11px;"
+            f"background-color: #2b2b2b; color: {color.name()}; border: 1px solid {color.name()}; padding: 1px 5px; border-radius: 3px; font-weight: 600; font-size: 10px;"
         )
         self.type_badge.show()
+
         self.summary_label.setText(summary)
+        self.summary_label.setToolTip(summary)
 
         # Check if table representation is applicable
         is_table = False

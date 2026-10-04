@@ -59,7 +59,7 @@ QMainWindow {
 
 QWidget {
     font-family: 'Segoe UI', 'SF Pro Text', 'Helvetica Neue', 'Noto Sans', sans-serif;
-    font-size: 13px;
+    font-size: 11px;
     color: #cccccc;
     background-color: transparent;
 }
@@ -68,26 +68,27 @@ QWidget {
 QToolBar {
     background-color: #252526;
     border-bottom: 1px solid #3c3c3c;
-    padding: 4px 8px;
-    spacing: 6px;
+    padding: 2px 4px;
+    spacing: 4px;
 }
 
-QToolButton {
+QToolButton, QPushButton {
     background-color: #333333;
     border: 1px solid #3c3c3c;
-    border-radius: 4px;
-    padding: 4px 10px;
+    border-radius: 3px;
+    padding: 2px 7px;
     color: #cccccc;
+    font-size: 11px;
     font-weight: 500;
 }
 
-QToolButton:hover {
+QToolButton:hover, QPushButton:hover {
     background-color: #3e3e42;
     border-color: #007acc;
     color: #ffffff;
 }
 
-QToolButton:pressed {
+QToolButton:pressed, QPushButton:pressed {
     background-color: #007acc;
     color: #ffffff;
 }
@@ -97,7 +98,8 @@ QLineEdit {
     background-color: #3c3c3c;
     border: 1px solid #454545;
     border-radius: 3px;
-    padding: 4px 8px;
+    padding: 2px 6px;
+    font-size: 11px;
     color: #ffffff;
     selection-background-color: #007acc;
 }
@@ -115,12 +117,12 @@ QTreeView {
     border-right: 1px solid #3c3c3c;
     show-decoration-selected: 1;
     font-family: 'Cascadia Code', 'Consolas', 'Segoe UI Mono', monospace;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 QTreeView::item {
-    height: 26px;
-    padding: 2px 4px;
+    height: 20px;
+    padding: 1px 2px;
     border-radius: 2px;
 }
 
@@ -142,12 +144,12 @@ QTreeView::branch:closed:has-children:has-siblings {
 QHeaderView::section {
     background-color: #2d2d2d;
     color: #858585;
-    padding: 5px 8px;
+    padding: 2px 6px;
     border: none;
     border-right: 1px solid #3c3c3c;
     border-bottom: 1px solid #3c3c3c;
     font-weight: 600;
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
 }
 
@@ -174,13 +176,13 @@ QTableView {
     border: none;
     gridline-color: #2d2d2d;
     font-family: 'Cascadia Code', 'Consolas', monospace;
-    font-size: 12px;
+    font-size: 11px;
     selection-background-color: #264f78;
     selection-color: #ffffff;
 }
 
 QTableView::item {
-    padding: 4px;
+    padding: 2px 4px;
 }
 
 QTableView::item:hover {
@@ -193,7 +195,7 @@ QPlainTextEdit {
     color: #d4d4d4;
     border: none;
     font-family: 'Cascadia Code', 'Consolas', monospace;
-    font-size: 12px;
+    font-size: 11px;
     selection-background-color: #264f78;
 }
 
@@ -201,15 +203,15 @@ QPlainTextEdit {
 QScrollBar:vertical {
     border: none;
     background: #1e1e1e;
-    width: 10px;
+    width: 8px;
     margin: 0px;
 }
 
 QScrollBar::handle:vertical {
     background: #424242;
-    min-height: 20px;
-    border-radius: 4px;
-    margin: 2px;
+    min-height: 16px;
+    border-radius: 3px;
+    margin: 1px;
 }
 
 QScrollBar::handle:vertical:hover {
@@ -219,15 +221,15 @@ QScrollBar::handle:vertical:hover {
 QScrollBar:horizontal {
     border: none;
     background: #1e1e1e;
-    height: 10px;
+    height: 8px;
     margin: 0px;
 }
 
 QScrollBar::handle:horizontal {
     background: #424242;
-    min-width: 20px;
-    border-radius: 4px;
-    margin: 2px;
+    min-width: 16px;
+    border-radius: 3px;
+    margin: 1px;
 }
 
 QScrollBar::handle:horizontal:hover {
@@ -243,9 +245,9 @@ QScrollBar::add-line, QScrollBar::sub-line {
 QStatusBar {
     background-color: #007acc;
     color: #ffffff;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
-    min-height: 22px;
+    min-height: 18px;
 }
 
 QStatusBar QLabel {

@@ -46,18 +46,18 @@ class NodeItemDelegate(QStyledItemDelegate):
                 type_color = get_type_color(text)
 
                 # Badge pill
-                badge_rect = option.rect.adjusted(4, 3, -4, -3)
+                badge_rect = option.rect.adjusted(2, 2, -2, -2)
                 fm = painter.fontMetrics()
-                tw = fm.horizontalAdvance(text) + 12
+                tw = fm.horizontalAdvance(text) + 8
                 pill_rect = QRect(badge_rect.left(), badge_rect.top(), min(tw, badge_rect.width()), badge_rect.height())
 
                 painter.setBrush(QColor(COLORS["bg_badge"]))
                 painter.setPen(QPen(type_color, 1))
-                painter.drawRoundedRect(pill_rect, 3, 3)
+                painter.drawRoundedRect(pill_rect, 2, 2)
 
                 painter.setPen(type_color)
                 font = painter.font()
-                font.setPointSize(9)
+                font.setPointSize(8)
                 painter.setFont(font)
                 painter.drawText(pill_rect, int(Qt.AlignmentFlag.AlignCenter), text)
 

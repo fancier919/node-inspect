@@ -88,6 +88,27 @@ class TestGuiHeadless(unittest.TestCase):
             delegate.paint(painter, opt, idx)
         painter.end()
 
+    def test_inspector_initially_hidden(self):
+        """Verify right panel is initially hidden."""
+        self.assertFalse(self.window.detail_inspector.isVisible())
+
+    def test_inspector_size_stability(self):
+        """Verify right panel size is preserved across content changes."""
+        self.window.resize(920, 580)
+        self.window.show()
+        # Trigger selection
+        self.window._on_node_selected("short_key", 123, "int", "123")
+        self.assertTrue(self.window.detail_inspector.isVisible())
+        sizes_before = self.window.splitter.sizes()
+
+        # Update with a very long summary string
+        huge_str = "x" * 2000
+        self.window._on_node_selected("long_key", huge_str, "str", huge_str)
+        sizes_after = self.window.splitter.sizes()
+
+        # Splitter right pane width should not have blown up
+        self.assertEqual(sizes_before[1], sizes_after[1])
+
 
 if __name__ == "__main__":
     unittest.main()

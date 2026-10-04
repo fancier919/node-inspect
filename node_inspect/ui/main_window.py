@@ -8,7 +8,7 @@ from PySide6.QtGui import QAction, QIcon, QKeySequence, QDragEnterEvent, QDropEv
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QFileDialog, QMessageBox, QLineEdit, QLabel, QPushButton,
-    QStatusBar, QToolBar
+    QStatusBar, QToolBar, QSizePolicy
 )
 
 from node_inspect.core.node_model import NodeTreeModel
@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("NodeInspect - Variable & Data Structure Inspector")
-        self.resize(1100, 720)
+        self.resize(920, 580)
         self.setAcceptDrops(True)
 
         self.current_file_path: Optional[str] = None
@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         # Open File Action
-        open_action = QAction("📂 Open File", self)
+        open_action = QAction("📂 Open", self)
         open_action.setShortcut(QKeySequence.StandardKey.Open)
         open_action.setStatusTip("Open data file (.json, .pkl, .parquet, etc.)")
         open_action.triggered.connect(self._browse_and_open_file)
@@ -69,15 +69,23 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
 
         # Filter Box
-        filter_label = QLabel(" 🔍 Filter: ")
-        filter_label.setStyleSheet("color: #858585; font-weight: 500;")
+        filter_label = QLabel(" 🔍 ")
+        filter_label.setStyleSheet("color: #858585;")
         toolbar.addWidget(filter_label)
 
         self.filter_edit = QLineEdit(self)
-        self.filter_edit.setPlaceholderText("Filter by key, type or value...")
-        self.filter_edit.setFixedWidth(260)
+        self.filter_edit.setPlaceholderText("Filter key, type, value...")
+        self.filter_edit.setFixedWidth(200)
         self.filter_edit.textChanged.connect(self._on_filter_changed)
         toolbar.addWidget(self.filter_edit)
+
+        toolbar.addSeparator()
+
+        # Inspector toggle action
+        self.toggle_inspector_btn = QPushButton("◫ Inspector")
+        self.toggle_inspector_btn.setToolTip("Toggle Right Inspector Panel")
+        self.toggle_inspector_btn.clicked.connect(self._toggle_inspector)
+        toolbar.addWidget(self.toggle_inspector_btn)
 
         toolbar.addSeparator()
 
@@ -86,7 +94,8 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(self.loading_indicator)
 
         # 2. Main 2-Pane Splitter (Left: Tree, Right: Inspector)
-        splitter = QSplitter(Qt.Orientation.Horizontal, self)
+        self.splitter = QSplitter(Qt.Orientation.Horizontal, self)
+        self.splitter.setChildrenCollapsible(True)
 
         # Tree View with Filter Proxy
         self.tree_model = NodeTreeModel()
@@ -95,28 +104,55 @@ class MainWindow(QMainWindow):
 
         self.tree_view = NodeTreeView(self)
         self.tree_view.setModel(self.proxy_model)
-        self.tree_view.header().resizeSection(0, 240)
-        self.tree_view.header().resizeSection(1, 100)
-        self.tree_view.header().resizeSection(2, 280)
+        self.tree_view.header().resizeSection(0, 200)
+        self.tree_view.header().resizeSection(1, 75)
+        self.tree_view.header().resizeSection(2, 220)
 
         # Connect signals
         self.tree_view.node_selected.connect(self._on_node_selected)
         self.tree_view.special_node_expanded.connect(self._on_special_expanded)
 
-        splitter.addWidget(self.tree_view)
+        self.splitter.addWidget(self.tree_view)
 
         # Detail Inspector
         self.detail_inspector = DetailInspectorWidget(self)
-        splitter.addWidget(self.detail_inspector)
+        self.detail_inspector.closed.connect(self._on_inspector_closed)
+        self.splitter.addWidget(self.detail_inspector)
 
-        # 55% Tree, 45% Detail
-        splitter.setSizes([600, 500])
-        main_layout.addWidget(splitter)
+        # Configure splitter resize weights: tree absorbs extra width, inspector preserves user-set size
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 0)
+        self.splitter.setCollapsible(0, False)
+        self.splitter.setCollapsible(1, True)
+
+        # Requirement: Right panel initially hidden
+        self.detail_inspector.hide()
+
+        main_layout.addWidget(self.splitter)
 
         # 3. Status Bar
         self.status_bar = QStatusBar(self)
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Ready. Drop a .json, .pkl, or .parquet file to inspect.")
+
+    def _toggle_inspector(self):
+        """Toggle right pane visibility."""
+        if self.detail_inspector.isVisible():
+            self.detail_inspector.hide()
+        else:
+            self._show_inspector_fixed()
+
+    def _on_inspector_closed(self):
+        # Triggered when '✕' button inside inspector is clicked
+        pass
+
+    def _show_inspector_fixed(self):
+        """Show inspector while preserving consistent width."""
+        total = self.splitter.width()
+        right = 360
+        left = max(200, total - right)
+        self.detail_inspector.show()
+        self.splitter.setSizes([left, right])
 
     def _browse_and_open_file(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -163,7 +199,7 @@ class MainWindow(QMainWindow):
         filename = os.path.basename(self.current_file_path)
         self.setWindowTitle(f"NodeInspect - {filename}")
         self.status_bar.showMessage(
-            f"Loaded {filename} successfully in {elapsed:.1f} ms | Pickle Security: Safe Whitelist Active"
+            f"Loaded {filename} in {elapsed:.1f} ms | Pickle Security: Safe Whitelist Active"
         )
 
     def _on_file_load_error(self, title: str, message: str):
@@ -178,7 +214,15 @@ class MainWindow(QMainWindow):
             self.tree_view.expandAll()
 
     def _on_node_selected(self, key: str, value: object, data_type: str, summary: str):
+        """Handle tree node selection: show inspector and lock panel sizes."""
+        if not self.detail_inspector.isVisible():
+            self._show_inspector_fixed()
+
+        # Capture current sizes so content updates cannot alter splitter dimensions
+        current_sizes = self.splitter.sizes()
         self.detail_inspector.display_node(key, value, data_type, summary)
+        if len(current_sizes) == 2 and current_sizes[1] > 0:
+            self.splitter.setSizes(current_sizes)
 
     def _on_special_expanded(self, msg: str):
         self.status_bar.showMessage(msg, 4000)
