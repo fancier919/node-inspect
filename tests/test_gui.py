@@ -1,0 +1,76 @@
+"""Offscreen headless test to verify MainWindow and data tree operations."""
+
+import os
+import sys
+import unittest
+
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+from PySide6.QtWidgets import QApplication
+from node_inspect.ui.main_window import MainWindow
+from node_inspect.core.loader import DataLoader
+from node_inspect.core.node_model import NodeTreeModel, NodeItem
+
+app = QApplication.instance()
+if not app:
+    app = QApplication([])
+
+
+class TestGuiHeadless(unittest.TestCase):
+    def setUp(self):
+        self.window = MainWindow()
+
+    def test_sync_dataloader(self):
+        # 1. JSON
+        json_data = DataLoader.load_file("sample_data/sample_config.json")
+        self.assertIn("project", json_data)
+
+        # 2. Pickle
+        pkl_data = DataLoader.load_file("sample_data/experiment_results.pkl")
+        self.assertIn("features_matrix", pkl_data)
+        self.assertIn("measurements_df", pkl_data)
+
+        # 3. Parquet
+        pq_data = DataLoader.load_file("sample_data/sensor_records.parquet")
+        self.assertEqual(len(pq_data), 100)
+
+    def test_tree_model_and_lazy_expansion(self):
+        pkl_data = DataLoader.load_file("sample_data/experiment_results.pkl")
+        model = NodeTreeModel(pkl_data)
+
+        # Root items count: 6 keys
+        self.assertEqual(model.rowCount(), 6)
+
+        # Find features_matrix (ndarray)
+        matrix_idx = None
+        for r in range(model.rowCount()):
+            idx = model.index(r, 0)
+            if idx.data() == "features_matrix":
+                matrix_idx = idx
+                break
+
+        self.assertIsNotNone(matrix_idx)
+        item: NodeItem = matrix_idx.data(256)  # UserRole is 256
+        self.assertEqual(item.data_type, "ndarray")
+        self.assertTrue(item.is_special_lazy)
+        self.assertFalse(item.is_explicitly_expanded)
+
+        # Initially children shouldn't be loaded
+        self.assertEqual(item.child_count(), 0)
+
+        # Trigger lazy expansion
+        expanded = model.expand_special_node(matrix_idx)
+        self.assertTrue(expanded)
+        self.assertTrue(item.is_explicitly_expanded)
+        # Now it has children (shape, dtype, min, max, mean, row previews, etc.)
+        self.assertGreater(item.child_count(), 0)
+
+    def test_detail_inspector(self):
+        pkl_data = DataLoader.load_file("sample_data/experiment_results.pkl")
+        df = pkl_data["measurements_df"]
+        self.window.detail_inspector.display_node("measurements_df", df, "DataFrame", "(100 rows × 5 cols)")
+        self.assertEqual(self.window.detail_inspector.type_badge.text(), "DataFrame")
+        self.assertEqual(self.window.detail_inspector.tab_widget.currentIndex(), 0)  # Table View active
+
+
+if __name__ == "__main__":
+    unittest.main()

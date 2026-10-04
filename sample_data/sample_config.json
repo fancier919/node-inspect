@@ -1,0 +1,48 @@
+{
+  "project": "NodeInspect",
+  "version": "1.0.0",
+  "description": "VS Code style lightweight tree inspector",
+  "settings": {
+    "theme": "dark_plus",
+    "fontSize": 13,
+    "lazy_loading": true,
+    "max_preview_rows": 5000,
+    "features": [
+      "tree_view",
+      "type_badges",
+      "dataframe_viewer",
+      "safe_pickle"
+    ]
+  },
+  "contributors": [
+    {
+      "id": 1,
+      "name": "Alice",
+      "role": "Core Dev",
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "Bob",
+      "role": "UI Designer",
+      "active": false
+    },
+    {
+      "id": 3,
+      "name": "Charlie",
+      "role": "Security Engineer",
+      "active": true
+    }
+  ],
+  "metrics": {
+    "latency_ms": 1.25,
+    "memory_usage_mb": 42.8,
+    "tags": [
+      "python",
+      "pyside6",
+      "debugger",
+      "gui"
+    ]
+  },
+  "null_val": null
+}
