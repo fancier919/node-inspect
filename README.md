@@ -34,6 +34,14 @@
 
 ## セットアップ & インストール
 
+### Conda環境の有効化
+本プロジェクト用に作成された Conda 環境 `node-inspect` (Python 3.12) をアクティベートしてください：
+
+```bash
+conda activate node-inspect
+```
+
+### パッケージのインストール（必要な場合）
 ```bash
 pip install -r requirements.txt
 ```
