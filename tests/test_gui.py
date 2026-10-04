@@ -109,6 +109,19 @@ class TestGuiHeadless(unittest.TestCase):
         # Splitter right pane width should not have blown up
         self.assertEqual(sizes_before[1], sizes_after[1])
 
+    def test_theme_toggle(self):
+        from node_inspect.ui.theme import ThemeManager
+        # Default is light
+        self.assertFalse(ThemeManager.is_dark())
+
+        # Toggle to dark
+        self.window._toggle_theme()
+        self.assertTrue(ThemeManager.is_dark())
+
+        # Toggle back to light
+        self.window._toggle_theme()
+        self.assertFalse(ThemeManager.is_dark())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -200,12 +200,17 @@ class DetailInspectorWidget(QWidget):
 
     def display_node(self, key: str, value: Any, data_type: str, summary: str):
         """Update inspector with node information."""
+        from node_inspect.ui.theme import ThemeManager
+        colors = ThemeManager.get_colors()
+        fg, bg, bd = ThemeManager.get_type_palette(data_type)
+
         self.current_value = value
         self.title_label.setText(f"{key}")
+        self.title_label.setStyleSheet(f"font-size: 11px; font-weight: bold; color: {colors['text_heading']};")
+
         self.type_badge.setText(data_type)
-        color = get_type_color(data_type)
         self.type_badge.setStyleSheet(
-            f"background-color: #2b2b2b; color: {color.name()}; border: 1px solid {color.name()}; padding: 1px 5px; border-radius: 3px; font-weight: 600; font-size: 10px;"
+            f"background-color: {bg.name()}; color: {fg.name()}; border: 1px solid {bd.name()}; padding: 1px 5px; border-radius: 3px; font-weight: 600; font-size: 10px;"
         )
         self.type_badge.show()
 

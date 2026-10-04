@@ -22,42 +22,53 @@ class NodeItemDelegate(QStyledItemDelegate):
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
         painter.save()
         try:
+            from node_inspect.ui.theme import ThemeManager
+            colors = ThemeManager.get_colors()
+
             col = index.column()
 
             # Selection background
             if option.state & QStyle.StateFlag.State_Selected:
-                painter.fillRect(option.rect, QColor(COLORS["bg_selected"]))
+                painter.fillRect(option.rect, QColor(colors["bg_selected"]))
             elif option.state & QStyle.StateFlag.State_MouseOver:
-                painter.fillRect(option.rect, QColor(COLORS["bg_hover"]))
+                painter.fillRect(option.rect, QColor(colors["bg_hover"]))
 
             text = index.data(Qt.ItemDataRole.DisplayRole) or ""
 
             if col == 0:
                 # Key / Variable name column
-                painter.setPen(QColor(COLORS["text_heading"]))
+                painter.setPen(QColor(colors["text_heading"]))
                 font = painter.font()
                 font.setBold(True)
                 painter.setFont(font)
+
+                # Draw subtle indent guide line if nested
+                level = 0
+                p = index.parent()
+                while p.isValid():
+                    level += 1
+                    p = p.parent()
+
                 text_rect = option.rect.adjusted(6, 0, -6, 0)
                 painter.drawText(text_rect, int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft), text)
 
             elif col == 1:
-                # Type badge column
-                type_color = get_type_color(text)
+                # Type badge column with theme palette (fg, bg, border)
+                fg_color, bg_color, bd_color = ThemeManager.get_type_palette(text)
 
-                # Badge pill
                 badge_rect = option.rect.adjusted(2, 2, -2, -2)
                 fm = painter.fontMetrics()
                 tw = fm.horizontalAdvance(text) + 8
                 pill_rect = QRect(badge_rect.left(), badge_rect.top(), min(tw, badge_rect.width()), badge_rect.height())
 
-                painter.setBrush(QColor(COLORS["bg_badge"]))
-                painter.setPen(QPen(type_color, 1))
+                painter.setBrush(bg_color)
+                painter.setPen(QPen(bd_color, 1))
                 painter.drawRoundedRect(pill_rect, 2, 2)
 
-                painter.setPen(type_color)
+                painter.setPen(fg_color)
                 font = painter.font()
                 font.setPointSize(8)
+                font.setBold(True)
                 painter.setFont(font)
                 painter.drawText(pill_rect, int(Qt.AlignmentFlag.AlignCenter), text)
 
@@ -65,9 +76,9 @@ class NodeItemDelegate(QStyledItemDelegate):
                 # Summary / Value column
                 item: Optional[NodeItem] = index.data(Qt.ItemDataRole.UserRole)
                 if item and item.is_special_lazy and not item.is_explicitly_expanded:
-                    painter.setPen(QColor(COLORS["warning"]))
+                    painter.setPen(QColor(colors["warning"]))
                 else:
-                    painter.setPen(QColor(COLORS["text_main"]))
+                    painter.setPen(QColor(colors["text_main"]))
 
                 text_rect = option.rect.adjusted(6, 0, -6, 0)
                 painter.drawText(text_rect, int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft), text)

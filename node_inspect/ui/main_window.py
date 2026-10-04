@@ -16,7 +16,7 @@ from node_inspect.core.loader import FileLoadWorker
 from node_inspect.ui.tree_view import NodeTreeView, FilterProxyModel
 from node_inspect.ui.detail_inspector import DetailInspectorWidget
 from node_inspect.ui.spinner import LoadingIndicator
-from node_inspect.ui.theme import COLORS, VSCODE_STYLE_SHEET
+from node_inspect.ui.theme import ThemeManager, generate_stylesheet, VSCODE_STYLE_SHEET
 
 
 class MainWindow(QMainWindow):
@@ -86,6 +86,14 @@ class MainWindow(QMainWindow):
         self.toggle_inspector_btn.setToolTip("Toggle Right Inspector Panel")
         self.toggle_inspector_btn.clicked.connect(self._toggle_inspector)
         toolbar.addWidget(self.toggle_inspector_btn)
+
+        toolbar.addSeparator()
+
+        # Theme toggle button (Soft Gray Light / VS Code Dark+)
+        self.toggle_theme_btn = QPushButton("🌗 Theme")
+        self.toggle_theme_btn.setToolTip("Toggle between Soft Gray Light and VS Code Dark+ theme")
+        self.toggle_theme_btn.clicked.connect(self._toggle_theme)
+        toolbar.addWidget(self.toggle_theme_btn)
 
         toolbar.addSeparator()
 
@@ -213,8 +221,24 @@ class MainWindow(QMainWindow):
         if text.strip():
             self.tree_view.expandAll()
 
+    def _toggle_theme(self):
+        """Toggle between Soft Gray Light and VS Code Dark+ themes."""
+        new_theme = "dark" if not ThemeManager.is_dark() else "light"
+        ThemeManager.set_theme(new_theme)
+        self.setStyleSheet(generate_stylesheet(new_theme))
+
+        # Re-render active inspector node with new theme colors if visible
+        if hasattr(self, "_last_selected_node") and self._last_selected_node:
+            k, v, dt, sm = self._last_selected_node
+            self.detail_inspector.display_node(k, v, dt, sm)
+
+        self.tree_view.viewport().update()
+        theme_title = "VS Code Dark+" if new_theme == "dark" else "Soft Gray Light"
+        self.status_bar.showMessage(f"Theme switched to: {theme_title}", 3000)
+
     def _on_node_selected(self, key: str, value: object, data_type: str, summary: str):
         """Handle tree node selection: show inspector and lock panel sizes."""
+        self._last_selected_node = (key, value, data_type, summary)
         if not self.detail_inspector.isVisible():
             self._show_inspector_fixed()
 
