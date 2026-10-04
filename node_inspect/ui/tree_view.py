@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt, QModelIndex, QRect, Signal, QSortFilterProxyModel
 from PySide6.QtGui import QPainter, QColor, QFont, QPen, QBrush
 from PySide6.QtWidgets import (
     QTreeView, QStyledItemDelegate, QStyleOptionViewItem,
-    QMenu, QApplication
+    QMenu, QApplication, QStyle
 )
 
 from node_inspect.core.node_model import NodeItem, NodeTreeModel
@@ -21,58 +21,59 @@ class NodeItemDelegate(QStyledItemDelegate):
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
         painter.save()
-        col = index.column()
+        try:
+            col = index.column()
 
-        # Selection background
-        if option.state & QStyleOptionViewItem.StateFlag.State_Selected:
-            painter.fillRect(option.rect, QColor(COLORS["bg_selected"]))
-        elif option.state & QStyleOptionViewItem.StateFlag.State_MouseOver:
-            painter.fillRect(option.rect, QColor(COLORS["bg_hover"]))
+            # Selection background
+            if option.state & QStyle.StateFlag.State_Selected:
+                painter.fillRect(option.rect, QColor(COLORS["bg_selected"]))
+            elif option.state & QStyle.StateFlag.State_MouseOver:
+                painter.fillRect(option.rect, QColor(COLORS["bg_hover"]))
 
-        text = index.data(Qt.ItemDataRole.DisplayRole) or ""
+            text = index.data(Qt.ItemDataRole.DisplayRole) or ""
 
-        if col == 0:
-            # Key / Variable name column
-            painter.setPen(QColor(COLORS["text_heading"]))
-            font = painter.font()
-            font.setBold(True)
-            painter.setFont(font)
-            text_rect = option.rect.adjusted(6, 0, -6, 0)
-            painter.drawText(text_rect, int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft), text)
+            if col == 0:
+                # Key / Variable name column
+                painter.setPen(QColor(COLORS["text_heading"]))
+                font = painter.font()
+                font.setBold(True)
+                painter.setFont(font)
+                text_rect = option.rect.adjusted(6, 0, -6, 0)
+                painter.drawText(text_rect, int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft), text)
 
-        elif col == 1:
-            # Type badge column
-            type_color = get_type_color(text)
+            elif col == 1:
+                # Type badge column
+                type_color = get_type_color(text)
 
-            # Badge pill
-            badge_rect = option.rect.adjusted(4, 3, -4, -3)
-            # Clip width if needed
-            fm = painter.fontMetrics()
-            tw = fm.horizontalAdvance(text) + 12
-            pill_rect = QRect(badge_rect.left(), badge_rect.top(), min(tw, badge_rect.width()), badge_rect.height())
+                # Badge pill
+                badge_rect = option.rect.adjusted(4, 3, -4, -3)
+                fm = painter.fontMetrics()
+                tw = fm.horizontalAdvance(text) + 12
+                pill_rect = QRect(badge_rect.left(), badge_rect.top(), min(tw, badge_rect.width()), badge_rect.height())
 
-            painter.setBrush(QColor(COLORS["bg_badge"]))
-            painter.setPen(QPen(type_color, 1))
-            painter.drawRoundedRect(pill_rect, 3, 3)
+                painter.setBrush(QColor(COLORS["bg_badge"]))
+                painter.setPen(QPen(type_color, 1))
+                painter.drawRoundedRect(pill_rect, 3, 3)
 
-            painter.setPen(type_color)
-            font = painter.font()
-            font.setPointSize(9)
-            painter.setFont(font)
-            painter.drawText(pill_rect, int(Qt.AlignmentFlag.AlignCenter), text)
+                painter.setPen(type_color)
+                font = painter.font()
+                font.setPointSize(9)
+                painter.setFont(font)
+                painter.drawText(pill_rect, int(Qt.AlignmentFlag.AlignCenter), text)
 
-        elif col == 2:
-            # Summary / Value column
-            item: Optional[NodeItem] = index.data(Qt.ItemDataRole.UserRole)
-            if item and item.is_special_lazy and not item.is_explicitly_expanded:
-                painter.setPen(QColor(COLORS["warning"]))
-            else:
-                painter.setPen(QColor(COLORS["text_main"]))
+            elif col == 2:
+                # Summary / Value column
+                item: Optional[NodeItem] = index.data(Qt.ItemDataRole.UserRole)
+                if item and item.is_special_lazy and not item.is_explicitly_expanded:
+                    painter.setPen(QColor(COLORS["warning"]))
+                else:
+                    painter.setPen(QColor(COLORS["text_main"]))
 
-            text_rect = option.rect.adjusted(6, 0, -6, 0)
-            painter.drawText(text_rect, int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft), text)
+                text_rect = option.rect.adjusted(6, 0, -6, 0)
+                painter.drawText(text_rect, int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft), text)
 
-        painter.restore()
+        finally:
+            painter.restore()
 
 
 class FilterProxyModel(QSortFilterProxyModel):

@@ -71,6 +71,23 @@ class TestGuiHeadless(unittest.TestCase):
         self.assertEqual(self.window.detail_inspector.type_badge.text(), "DataFrame")
         self.assertEqual(self.window.detail_inspector.tab_widget.currentIndex(), 0)  # Table View active
 
+    def test_delegate_paint(self):
+        from PySide6.QtGui import QPainter, QImage
+        from PySide6.QtWidgets import QStyleOptionViewItem
+
+        model = NodeTreeModel({"alpha": 123, "beta": "text", "gamma": [1, 2, 3]})
+        delegate = self.window.tree_view.itemDelegate()
+
+        img = QImage(300, 100, QImage.Format.Format_RGB32)
+        painter = QPainter(img)
+        opt = QStyleOptionViewItem()
+        opt.rect = img.rect()
+
+        for col in range(3):
+            idx = model.index(0, col)
+            delegate.paint(painter, opt, idx)
+        painter.end()
+
 
 if __name__ == "__main__":
     unittest.main()
