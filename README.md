@@ -38,25 +38,15 @@
 
 ## セットアップ & インストール
 
-### 1. ソースコードの取得
-**Git を使用する場合:**
+### 1. リポジトリのクローン（またはダウンロード）
 ```bash
 git clone https://github.com/fancier919/node-inspect.git
 cd node-inspect
 ```
-**Git が使用できない環境（社内PCなど）の場合:**
-本ページ右上の **「<> Code」 → 「Download ZIP」** をクリックしてダウンロードし、お好みのフォルダに解凍してください。
+*(※ZIPでダウンロードする場合は、GitHub画面の「<> Code」→「Download ZIP」からダウンロードして展開してください)*
 
-### 2. 仮想環境の作成（推奨・任意）
-プロジェクト専用の仮想環境を分ける場合は、以下のいずれかで作成してアクティベートします（既存のPython環境をそのまま使う場合はスキップ可能です）。
-
-**Conda を利用する場合:**
-```bash
-conda create -n node-inspect python=3.12
-conda activate node-inspect
-```
-
-**標準 venv を利用する場合:**
+### 2. 仮想環境の作成（推奨）
+**venv を利用する場合:**
 ```bash
 python -m venv .venv
 # Windows:
@@ -65,18 +55,22 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. 依存パッケージのインストール
-解凍した（またはクローンした）ディレクトリ内で以下を実行します：
+**Conda を利用する場合:**
+```bash
+conda create -n node-inspect python=3.12
+conda activate node-inspect
+```
 
+### 3. 依存パッケージのインストール
 ```bash
 pip install -r requirements.txt
 ```
 
 #### 依存パッケージ
-- `PySide6` (GUIフレームワーク)
-- `numpy` (数値配列)
-- `pandas` (データフレーム)
-- `pyarrow` (Parquet & テーブル処理)
+- `PySide6`
+- `numpy`
+- `pandas`
+- `pyarrow`
 
 ---
 
@@ -86,15 +80,15 @@ pip install -r requirements.txt
 ```bash
 python -m node_inspect.main
 ```
-ウィンドウ右上の「📂 Open File」からファイルを選択するか、ファイルをウィンドウに直接ドラッグ＆ドロップしてください。
+ウィンドウ右上の「📂 Open」からファイルを選択するか、ファイルをウィンドウに直接ドラッグ＆ドロップしてください。
 
 ### 2. コマンドライン引数でファイルパスを指定して起動
 ```bash
 python -m node_inspect.main sample_data/experiment_results.pkl
 ```
 
-### 3. Windowsでコンソール画面を出さずに起動（ランチャー・関連付け用）
-自作ランチャーやショートカットから黒いコマンドプロンプト画面を出さずに直接GUIを開く場合は、`python` の代わりに `pythonw` を使用します：
+### 3. コンソールウィンドウを出さずに起動（Windows）
+バックグラウンド実行やショートカット・ファイル関連付けから起動する場合は、`python` の代わりに `pythonw` を使用します：
 
 ```bash
 pythonw -m node_inspect.main path/to/data.parquet
