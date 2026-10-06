@@ -250,6 +250,28 @@ QSplitter::handle:hover {{
     background-color: {c["accent"]};
 }}
 
+/* Detail Inspector Pane */
+QWidget#detailInspector {{
+    background-color: {c["bg_main"]};
+}}
+
+QWidget#inspectorHeader {{
+    background-color: {c["bg_header"]};
+    border-bottom: 1px solid {c["border"]};
+    border-radius: 3px;
+}}
+
+QLabel#inspectorTitle {{
+    font-size: 11px;
+    font-weight: bold;
+    color: {c["text_heading"]};
+}}
+
+QLabel#inspectorSummary {{
+    font-size: 10px;
+    color: {c["text_muted"]};
+}}
+
 /* Table View in Detail Inspector */
 QTableView {{
     background-color: {c["bg_panel"]};

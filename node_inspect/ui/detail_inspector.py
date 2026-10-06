@@ -128,43 +128,39 @@ class DetailInspectorWidget(QWidget):
         return QSize(120, 100)
 
     def _init_ui(self):
+        self.setObjectName("detailInspector")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
 
-        # Header Info Bar
-        header_bar = QHBoxLayout()
-        header_bar.setContentsMargins(2, 2, 2, 2)
+        # Header Info Bar container
+        header_container = QWidget(self)
+        header_container.setObjectName("inspectorHeader")
+        header_bar = QHBoxLayout(header_container)
+        header_bar.setContentsMargins(4, 3, 4, 3)
         header_bar.setSpacing(4)
 
-        self.title_label = QLabel("Details", self)
-        self.title_label.setStyleSheet("font-size: 11px; font-weight: bold; color: #ffffff;")
+        self.title_label = QLabel("Details", header_container)
+        self.title_label.setObjectName("inspectorTitle")
         self.title_label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
 
-        self.type_badge = QLabel("", self)
-        self.type_badge.setStyleSheet(
-            "background-color: #333333; color: #4ec9b0; padding: 1px 5px; border-radius: 3px; font-weight: 600; font-size: 10px;"
-        )
+        self.type_badge = QLabel("", header_container)
         self.type_badge.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.type_badge.hide()
 
-        self.summary_label = QLabel("", self)
-        self.summary_label.setStyleSheet("color: #858585; font-size: 10px;")
-        # Ignored size policy prevents long labels from expanding the splitter width
+        self.summary_label = QLabel("", header_container)
+        self.summary_label.setObjectName("inspectorSummary")
         self.summary_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
 
-        self.copy_btn = QPushButton("Copy", self)
+        self.copy_btn = QPushButton("Copy", header_container)
         self.copy_btn.setFixedSize(45, 20)
-        self.copy_btn.setStyleSheet(
-            "background-color: #333333; border: 1px solid #444; border-radius: 2px; color: #ccc; font-size: 10px; padding: 1px;"
-        )
         self.copy_btn.clicked.connect(self._copy_content)
 
-        self.close_btn = QPushButton("✕", self)
+        self.close_btn = QPushButton("✕", header_container)
         self.close_btn.setFixedSize(20, 20)
         self.close_btn.setToolTip("Close Panel")
         self.close_btn.setStyleSheet(
-            "background-color: transparent; border: none; color: #858585; font-size: 11px; font-weight: bold;"
+            "background-color: transparent; border: none; font-size: 11px; font-weight: bold;"
         )
         self.close_btn.clicked.connect(self._on_close_clicked)
 
@@ -174,7 +170,7 @@ class DetailInspectorWidget(QWidget):
         header_bar.addWidget(self.copy_btn)
         header_bar.addWidget(self.close_btn)
 
-        layout.addLayout(header_bar)
+        layout.addWidget(header_container)
 
         # Tab Widget for Table and Raw / Text view
         self.tab_widget = QTabWidget(self)
