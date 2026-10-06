@@ -95,3 +95,9 @@ python -m unittest tests/test_safe_pickle.py
 # GUI & データモデルの統合テスト
 python -m unittest tests/test_gui.py
 ```
+
+---
+
+## ライセンス
+
+本プロジェクトは [MIT License](LICENSE) の下で公開されています。商用・非商用問わず自由に利用・改変・再配布が可能です。
