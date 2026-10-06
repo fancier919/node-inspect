@@ -29,9 +29,16 @@ class TestGuiHeadless(unittest.TestCase):
         self.assertIn("features_matrix", pkl_data)
         self.assertIn("measurements_df", pkl_data)
 
-        # 3. Parquet
+        # 3. Parquet with metadata
         pq_data = DataLoader.load_file("sample_data/sensor_records.parquet")
-        self.assertEqual(len(pq_data), 100)
+        self.assertIn("metadata", pq_data)
+        self.assertIn("data", pq_data)
+        self.assertEqual(len(pq_data["data"]), 100)
+        custom_meta = pq_data["metadata"]["custom_metadata"]
+        self.assertEqual(custom_meta["author"], "Kaneko")
+        self.assertEqual(custom_meta["experiment_id"], "EXP-2026-10")
+        self.assertIsInstance(custom_meta["config"], dict)  # Parsed JSON
+        self.assertEqual(custom_meta["config"]["channels"], 5)
 
     def test_tree_model_and_lazy_expansion(self):
         pkl_data = DataLoader.load_file("sample_data/experiment_results.pkl")

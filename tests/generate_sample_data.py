@@ -71,9 +71,26 @@ def generate_samples(output_dir: str = "sample_data"):
         pickle.dump(pickle_payload, f)
     print(f"Generated: {pkl_path}")
 
-    # 3. Parquet file
+    # 3. Parquet file with rich custom metadata
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    table = pa.Table.from_pandas(df, preserve_index=False)
+    custom_metadata = {
+        "author": "Kaneko",
+        "experiment_id": "EXP-2026-10",
+        "description": "Industrial sensor time-series benchmark",
+        "config": json.dumps({"sampling_rate_hz": 50, "calibration_status": "VALID", "channels": 5}),
+    }
+    existing_meta = table.schema.metadata or {}
+    combined_meta = {
+        **existing_meta,
+        **{k.encode("utf-8"): str(v).encode("utf-8") for k, v in custom_metadata.items()},
+    }
+    table = table.replace_schema_metadata(combined_meta)
+
     parquet_path = os.path.join(output_dir, "sensor_records.parquet")
-    df.to_parquet(parquet_path, index=False)
+    pq.write_table(table, parquet_path)
     print(f"Generated: {parquet_path}")
 
     # 4. Malicious pickle for security testing
