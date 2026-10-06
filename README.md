@@ -38,23 +38,45 @@
 
 ## セットアップ & インストール
 
-### Conda環境の有効化
-本プロジェクト用に作成された Conda 環境 `node-inspect` (Python 3.12) をアクティベートしてください：
-
+### 1. ソースコードの取得
+**Git を使用する場合:**
 ```bash
+git clone https://github.com/fancier919/node-inspect.git
+cd node-inspect
+```
+**Git が使用できない環境（社内PCなど）の場合:**
+本ページ右上の **「<> Code」 → 「Download ZIP」** をクリックしてダウンロードし、お好みのフォルダに解凍してください。
+
+### 2. 仮想環境の作成（推奨・任意）
+プロジェクト専用の仮想環境を分ける場合は、以下のいずれかで作成してアクティベートします（既存のPython環境をそのまま使う場合はスキップ可能です）。
+
+**Conda を利用する場合:**
+```bash
+conda create -n node-inspect python=3.12
 conda activate node-inspect
 ```
 
-### パッケージのインストール（必要な場合）
+**標準 venv を利用する場合:**
+```bash
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS / Linux:
+source .venv/bin/activate
+```
+
+### 3. 依存パッケージのインストール
+解凍した（またはクローンした）ディレクトリ内で以下を実行します：
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 依存パッケージ
-- `PySide6`
-- `numpy`
-- `pandas`
-- `pyarrow`
+#### 依存パッケージ
+- `PySide6` (GUIフレームワーク)
+- `numpy` (数値配列)
+- `pandas` (データフレーム)
+- `pyarrow` (Parquet & テーブル処理)
 
 ---
 
@@ -69,6 +91,13 @@ python -m node_inspect.main
 ### 2. コマンドライン引数でファイルパスを指定して起動
 ```bash
 python -m node_inspect.main sample_data/experiment_results.pkl
+```
+
+### 3. Windowsでコンソール画面を出さずに起動（ランチャー・関連付け用）
+自作ランチャーやショートカットから黒いコマンドプロンプト画面を出さずに直接GUIを開く場合は、`python` の代わりに `pythonw` を使用します：
+
+```bash
+pythonw -m node_inspect.main path/to/data.parquet
 ```
 
 ---
