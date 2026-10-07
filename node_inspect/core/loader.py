@@ -6,6 +6,7 @@ from typing import Any, Optional
 from PySide6.QtCore import QObject, QThread, Signal
 
 from node_inspect.core.safe_pickle import safe_load_pickle, PickleSecurityError
+from node_inspect.core.config import ConfigManager
 
 
 class DataLoader:
@@ -13,18 +14,26 @@ class DataLoader:
 
     @staticmethod
     def load_file(file_path: str, allow_pickle_numpy: bool = True, allow_pickle_pandas: bool = True) -> Any:
-        ext = os.path.splitext(file_path)[1].lower()
+        file_path = file_path.strip().strip('"').strip("'")
+        file_type = ConfigManager.get_file_type(file_path)
 
-        if ext == ".json":
-            with open(file_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+        # 1. JSON
+        if file_type == "json":
+            try:
+                with open(file_path, "r", encoding="utf-8-sig") as f:
+                    return json.load(f)
+            except UnicodeDecodeError:
+                with open(file_path, "r", encoding="cp932") as f:
+                    return json.load(f)
 
-        elif ext in (".pkl", ".pickle"):
+        # 2. Pickle
+        elif file_type == "pickle":
             with open(file_path, "rb") as f:
                 data = f.read()
             return safe_load_pickle(data, allow_numpy=allow_pickle_numpy, allow_pandas=allow_pickle_pandas)
 
-        elif ext in (".parquet", ".pq"):
+        # 3. Parquet
+        elif file_type == "parquet":
             try:
                 import pyarrow.parquet as pq
                 import pandas as pd
@@ -40,10 +49,11 @@ class DataLoader:
                 for k, v in raw_meta.items():
                     k_str = k.decode("utf-8", errors="replace") if isinstance(k, bytes) else str(k)
                     v_str = v.decode("utf-8", errors="replace") if isinstance(v, bytes) else str(v)
-                    # Try parsing JSON if applicable (e.g. pandas metadata, json params)
-                    if (v_str.startswith("{") and v_str.endswith("}")) or (v_str.startswith("[") and v_str.endswith("]")):
+                    # Try parsing JSON if applicable (e.g. custom metadata like 'mqmeta' or pandas json)
+                    stripped_v = v_str.strip()
+                    if (stripped_v.startswith("{") and stripped_v.endswith("}")) or (stripped_v.startswith("[") and stripped_v.endswith("]")):
                         try:
-                            parsed_meta[k_str] = json.loads(v_str)
+                            parsed_meta[k_str] = json.loads(stripped_v)
                             continue
                         except Exception:
                             pass
@@ -74,28 +84,34 @@ class DataLoader:
                 import pandas as pd
                 return pd.read_parquet(file_path)
 
-        elif ext in (".yaml", ".yml"):
+        # 4. YAML
+        elif file_type == "yaml":
             try:
                 import ruamel.yaml as yaml
                 y = yaml.YAML(typ="safe")
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, "r", encoding="utf-8-sig") as f:
                     return y.load(f)
             except ImportError:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, "r", encoding="utf-8-sig") as f:
                     return f.read()
 
-        elif ext == ".csv":
+        # 5. CSV
+        elif file_type == "csv":
             import pandas as pd
             return pd.read_csv(file_path)
 
+        # Fallback text or binary
         else:
-            # Fallback text or binary
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, "r", encoding="utf-8-sig") as f:
                     return f.read()
             except UnicodeDecodeError:
-                with open(file_path, "rb") as f:
-                    return f.read()
+                try:
+                    with open(file_path, "r", encoding="cp932") as f:
+                        return f.read()
+                except UnicodeDecodeError:
+                    with open(file_path, "rb") as f:
+                        return f.read()
 
 
 class FileLoadWorker(QThread):

@@ -1,0 +1,78 @@
+"""Test custom file extension configuration and custom parquet metadata parsing."""
+
+import json
+import os
+import tempfile
+import unittest
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+
+from node_inspect.core.config import ConfigManager
+from node_inspect.core.loader import DataLoader
+
+
+class TestCustomConfigAndLoader(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.test_dir = self.tmpdir.name
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    def test_custom_extension_json(self):
+        custom_json_file = os.path.join(self.test_dir, "data.myjson")
+        payload = {"model": "transformer", "layers": 12, "active": True}
+        with open(custom_json_file, "w", encoding="utf-8") as f:
+            json.dump(payload, f)
+
+        # Before mapping: loaded as raw string fallback
+        raw = DataLoader.load_file(custom_json_file)
+        self.assertIsInstance(raw, str)
+
+        # Mock extension mapping to include .myjson
+        original_mapping = ConfigManager.get_extension_mapping
+        try:
+            ConfigManager.get_extension_mapping = classmethod(lambda cls: {".myjson": "json"})
+            parsed = DataLoader.load_file(f'"{custom_json_file}"')  # Test quote handling too
+            self.assertIsInstance(parsed, dict)
+            self.assertEqual(parsed["model"], "transformer")
+            self.assertEqual(parsed["layers"], 12)
+        finally:
+            ConfigManager.get_extension_mapping = original_mapping
+
+    def test_custom_parquet_with_mqmeta(self):
+        custom_pq_file = os.path.join(self.test_dir, "data.mypq")
+        df = pd.DataFrame({"colA": [10, 20, 30], "colB": ["x", "y", "z"]})
+        meta = {
+            "title": "experiment_run",
+            "hyperparams": {"batch_size": 32, "lr": 0.001}
+        }
+        table = pa.Table.from_pandas(df, preserve_index=False)
+        table = table.replace_schema_metadata({b"mqmeta": json.dumps(meta).encode()})
+        pq.write_table(table, custom_pq_file, compression="zstd")
+
+        # Mock extension mapping to include .mypq
+        original_mapping = ConfigManager.get_extension_mapping
+        try:
+            ConfigManager.get_extension_mapping = classmethod(lambda cls: {".mypq": "parquet"})
+            loaded = DataLoader.load_file(custom_pq_file)
+            self.assertIsInstance(loaded, dict)
+            self.assertIn("metadata", loaded)
+            self.assertIn("data", loaded)
+
+            # Check mqmeta decoded and parsed as nested dictionary
+            custom_meta = loaded["metadata"]["custom_metadata"]
+            self.assertIn("mqmeta", custom_meta)
+            self.assertIsInstance(custom_meta["mqmeta"], dict)
+            self.assertEqual(custom_meta["mqmeta"]["hyperparams"]["batch_size"], 32)
+            self.assertEqual(custom_meta["mqmeta"]["hyperparams"]["lr"], 0.001)
+
+            # Check dataframe content
+            self.assertEqual(len(loaded["data"]), 3)
+        finally:
+            ConfigManager.get_extension_mapping = original_mapping
+
+
+if __name__ == "__main__":
+    unittest.main()

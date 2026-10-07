@@ -175,6 +175,7 @@ class MainWindow(QMainWindow):
 
     def load_file(self, file_path: str):
         """Asynchronously load a data file in a background worker."""
+        file_path = file_path.strip().strip('"').strip("'")
         if not os.path.exists(file_path):
             QMessageBox.critical(self, "Error", f"File not found: {file_path}")
             return

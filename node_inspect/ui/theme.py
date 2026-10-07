@@ -408,6 +408,33 @@ QMenu::separator {{
     background: {c["border"]};
     margin: 2px 4px;
 }}
+
+/* Dialogs & Message Boxes */
+QDialog, QMessageBox {{
+    background-color: {c["bg_panel"]};
+    color: {c["text_heading"]};
+}}
+
+QMessageBox QLabel {{
+    color: {c["text_heading"]};
+    font-size: 11px;
+    background-color: transparent;
+}}
+
+QMessageBox QPushButton {{
+    min-width: 65px;
+    min-height: 22px;
+    padding: 3px 12px;
+    background-color: {c["bg_button"]};
+    border: 1px solid {c["border"]};
+    border-radius: 3px;
+    color: {c["text_heading"]};
+}}
+
+QMessageBox QPushButton:hover {{
+    background-color: {c["bg_button_hover"]};
+    border-color: {c["accent"]};
+}}
 """
 
 

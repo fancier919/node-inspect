@@ -56,6 +56,26 @@ pythonw run.py path/to/file.parquet
 
 ---
 
+## 独自拡張子の設定
+
+Windows の「既定のプログラム」等で独自拡張子を関連付けて起動する場合、ユーザーホームディレクトリ配下の設定ファイルで拡張子とファイル形式のマッピングを指定できます。
+
+設定ファイルパス: `~/.node-inspect/config.json`（初回起動時に自動生成されます）
+
+```json
+{
+  "extensions": {
+    "json": [".json", ".myjson"],
+    "parquet": [".parquet", ".pq", ".mypq"],
+    "pickle": [".pkl", ".pickle"],
+    "csv": [".csv"],
+    "yaml": [".yaml", ".yml"]
+  }
+}
+```
+
+---
+
 ## テスト
 
 ```bash
