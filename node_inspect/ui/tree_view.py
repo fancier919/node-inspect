@@ -38,7 +38,7 @@ class NodeItemDelegate(QStyledItemDelegate):
             if col == 0:
                 # Key / Variable name column
                 painter.setPen(QColor(colors["text_heading"]))
-                font = painter.font()
+                font = QFont(option.font)
                 font.setBold(True)
                 painter.setFont(font)
 
@@ -57,6 +57,11 @@ class NodeItemDelegate(QStyledItemDelegate):
                 fg_color, bg_color, bd_color = ThemeManager.get_type_palette(text)
 
                 badge_rect = option.rect.adjusted(2, 2, -2, -2)
+                badge_font = QFont(option.font)
+                badge_font.setPointSize(8)
+                badge_font.setBold(True)
+                painter.setFont(badge_font)
+
                 fm = painter.fontMetrics()
                 tw = fm.horizontalAdvance(text) + 8
                 pill_rect = QRect(badge_rect.left(), badge_rect.top(), min(tw, badge_rect.width()), badge_rect.height())
@@ -66,14 +71,11 @@ class NodeItemDelegate(QStyledItemDelegate):
                 painter.drawRoundedRect(pill_rect, 2, 2)
 
                 painter.setPen(fg_color)
-                font = painter.font()
-                font.setPointSize(8)
-                font.setBold(True)
-                painter.setFont(font)
                 painter.drawText(pill_rect, int(Qt.AlignmentFlag.AlignCenter), text)
 
             elif col == 2:
                 # Summary / Value column
+                painter.setFont(option.font)
                 item: Optional[NodeItem] = index.data(Qt.ItemDataRole.UserRole)
                 if item and item.is_special_lazy and not item.is_explicitly_expanded:
                     painter.setPen(QColor(colors["warning"]))
