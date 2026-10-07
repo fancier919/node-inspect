@@ -24,6 +24,10 @@ def main():
     app.setApplicationName("NodeInspect")
     app.setOrganizationName("KanekoPy")
 
+    # Ensure ~/.node-inspect/config.json exists immediately on startup
+    from node_inspect.core.config import ConfigManager
+    ConfigManager.ensure_config()
+
     window = MainWindow()
     window.show()
 
