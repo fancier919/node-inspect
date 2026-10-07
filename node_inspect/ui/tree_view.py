@@ -251,13 +251,13 @@ class NodeTreeView(QTreeView):
 
         # Context action: Open with Default Program
         if resolved_path:
-            open_default_action = menu.addAction(f"🚀 Open in Default App ({os.path.basename(resolved_path)})")
+            open_default_action = menu.addAction(f"Open in Default App ({os.path.basename(resolved_path)})")
         else:
             open_default_action = None
 
         # Context action: Execute Custom Script
         if matched_action:
-            label = matched_action.get("name") or "⚡ Run Custom Action"
+            label = matched_action.get("name") or "Run Custom Action"
             custom_action = menu.addAction(label)
         else:
             custom_action = None

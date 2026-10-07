@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         # Open File Action
-        open_action = QAction("📂 Open", self)
+        open_action = QAction("Open", self)
         open_action.setShortcut(QKeySequence.StandardKey.Open)
         open_action.setStatusTip("Open data file (.json, .pkl, .parquet, etc.)")
         open_action.triggered.connect(self._browse_and_open_file)
