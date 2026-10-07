@@ -42,14 +42,16 @@ pip install -r requirements.txt
 ## 起動方法
 
 ```bash
-# アプリケーションを起動
+# アプリケーションを起動 (run.py または -m)
+python run.py
+# または
 python -m node_inspect.main
 
 # ファイルを指定して起動
-python -m node_inspect.main path/to/file.parquet
+python run.py path/to/file.parquet
 
-# コンソール非表示で起動 (Windows)
-pythonw -m node_inspect.main path/to/file.parquet
+# コンソール非表示で起動 (Windows / ランチャー用)
+pythonw run.py path/to/file.parquet
 ```
 
 ---
