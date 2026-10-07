@@ -1,6 +1,7 @@
 """VS Code style TreeView with custom delegate, badges, and lazy expansion triggers."""
 
 import json
+import os
 from typing import Optional
 from PySide6.QtCore import Qt, QModelIndex, QRect, Signal, QSortFilterProxyModel
 from PySide6.QtGui import QPainter, QColor, QFont, QPen, QBrush
@@ -10,6 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from node_inspect.core.node_model import NodeItem, NodeTreeModel
+from node_inspect.core.config import ConfigManager
 from node_inspect.ui.theme import COLORS, get_type_color
 
 
