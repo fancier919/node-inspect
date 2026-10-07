@@ -73,6 +73,24 @@ class TestCustomConfigAndLoader(unittest.TestCase):
         finally:
             ConfigManager.get_extension_mapping = original_mapping
 
+    def test_open_file_filter_reflects_custom_extensions(self):
+        original_ensure = ConfigManager.ensure_config
+        try:
+            ConfigManager.ensure_config = classmethod(lambda cls: {
+                "extensions": {
+                    "json": [".json", ".myjson"],
+                    "parquet": [".parquet", ".mypq"]
+                }
+            })
+            filter_str = ConfigManager.get_open_file_filter()
+            self.assertIn("*.myjson", filter_str)
+            self.assertIn("*.mypq", filter_str)
+            self.assertIn("JSON (*.json *.myjson)", filter_str)
+            self.assertIn("Parquet (*.parquet *.mypq)", filter_str)
+            self.assertTrue(filter_str.startswith("All Supported Files (*.json *.myjson *.parquet *.mypq)"))
+        finally:
+            ConfigManager.ensure_config = original_ensure
+
 
 if __name__ == "__main__":
     unittest.main()

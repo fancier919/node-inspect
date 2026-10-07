@@ -163,12 +163,13 @@ class MainWindow(QMainWindow):
         self.splitter.setSizes([left, right])
 
     def _browse_and_open_file(self):
+        from node_inspect.core.config import ConfigManager
+        file_filter = ConfigManager.get_open_file_filter()
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open Data File",
             "",
-            "All Supported Files (*.json *.pkl *.pickle *.parquet *.pq *.csv *.yaml *.yml);;"
-            "JSON (*.json);;Pickle (*.pkl *.pickle);;Parquet (*.parquet *.pq);;All Files (*.*)"
+            file_filter
         )
         if file_path:
             self.load_file(file_path)
