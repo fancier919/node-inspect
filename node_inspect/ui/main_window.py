@@ -105,13 +105,13 @@ class MainWindow(QMainWindow):
         self.splitter = QSplitter(Qt.Orientation.Horizontal, self)
         self.splitter.setChildrenCollapsible(True)
 
-        # Tree View with Filter Proxy
+        # Tree View with direct model by default (proxy_model attached dynamically on search)
         self.tree_model = NodeTreeModel()
         self.proxy_model = FilterProxyModel(self)
         self.proxy_model.setSourceModel(self.tree_model)
 
         self.tree_view = NodeTreeView(self)
-        self.tree_view.setModel(self.proxy_model)
+        self.tree_view.setModel(self.tree_model)
         self.tree_view.header().resizeSection(0, 200)
         self.tree_view.header().resizeSection(1, 75)
         self.tree_view.header().resizeSection(2, 220)
@@ -218,9 +218,22 @@ class MainWindow(QMainWindow):
         QMessageBox.warning(self, title, message)
 
     def _on_filter_changed(self, text: str):
-        regex = QRegularExpression(text, QRegularExpression.PatternOption.CaseInsensitiveOption)
-        self.proxy_model.setFilterRegularExpression(regex)
-        if text.strip():
+        query = text.strip()
+        if not query:
+            if self.tree_view.model() != self.tree_model:
+                self.proxy_model.setFilterRegularExpression("")
+                self.tree_view.setModel(self.tree_model)
+                self.tree_view.header().resizeSection(0, 200)
+                self.tree_view.header().resizeSection(1, 75)
+                self.tree_view.header().resizeSection(2, 220)
+        else:
+            regex = QRegularExpression(query, QRegularExpression.PatternOption.CaseInsensitiveOption)
+            self.proxy_model.setFilterRegularExpression(regex)
+            if self.tree_view.model() != self.proxy_model:
+                self.tree_view.setModel(self.proxy_model)
+                self.tree_view.header().resizeSection(0, 200)
+                self.tree_view.header().resizeSection(1, 75)
+                self.tree_view.header().resizeSection(2, 220)
             self.tree_view.expandAll()
 
     def _toggle_theme(self):

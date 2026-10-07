@@ -175,6 +175,7 @@ class DetailInspectorWidget(QWidget):
         # Tab Widget for Table and Raw / Text view
         self.tab_widget = QTabWidget(self)
         self.tab_widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
+        self.tab_widget.currentChanged.connect(self._on_tab_changed)
 
         # 1. Table View Tab
         self.table_view = QTableView(self)
@@ -188,11 +189,68 @@ class DetailInspectorWidget(QWidget):
         self.text_edit.setReadOnly(True)
         self.tab_widget.addTab(self.text_edit, "Raw / JSON")
 
+        self._text_dirty = True
+        self._current_data_type = ""
+
         layout.addWidget(self.tab_widget)
 
     def _on_close_clicked(self):
         self.hide()
         self.closed.emit()
+
+    def _on_tab_changed(self, index: int):
+        """Render text view lazily only when Raw / JSON tab is activated."""
+        if index == 1 and self._text_dirty:
+            self._update_text_content()
+
+    def _update_text_content(self):
+        """Build preview string for Raw / JSON tab."""
+        value = self.current_value
+        data_type = self._current_data_type
+        text_content = ""
+        try:
+            if isinstance(value, (dict, list)):
+                text_content = json.dumps(value, indent=2, ensure_ascii=False, default=str)
+            elif data_type == "DataFrame":
+                col_preview = list(value.columns)
+                if len(col_preview) > 50:
+                    col_preview_str = str(col_preview[:50]) + f"\n... ({len(col_preview) - 50} more columns omitted)"
+                else:
+                    col_preview_str = str(col_preview)
+
+                dtype_preview = str(value.dtypes.head(50))
+                if len(value.columns) > 50:
+                    dtype_preview += f"\n... ({len(value.columns) - 50} more dtypes omitted)"
+
+                head_preview = str(value.head(10))
+                text_content = (
+                    f"Shape: {value.shape[0]} rows × {value.shape[1]} cols\n\n"
+                    f"Columns:\n{col_preview_str}\n\n"
+                    f"Data Types:\n{dtype_preview}\n\n"
+                    f"Head (10 rows):\n{head_preview}"
+                )
+            elif data_type == "Series":
+                head_preview = str(value.head(10))
+                text_content = (
+                    f"Length: {len(value)}, Dtype: {value.dtype}\n\n"
+                    f"Head (10 items):\n{head_preview}"
+                )
+            elif data_type == "ndarray":
+                text_content = (
+                    f"ndarray details:\n"
+                    f"Shape: {value.shape}\n"
+                    f"Dtype: {value.dtype}\n"
+                    f"Size: {value.size}\n"
+                    f"Nbytes: {value.nbytes} bytes\n\n"
+                    f"Array representation:\n{str(value)}"
+                )
+            else:
+                text_content = str(value)
+        except Exception as e:
+            text_content = f"<Error inspecting value: {e}>\n{repr(value)}"
+
+        self.text_edit.setPlainText(text_content)
+        self._text_dirty = False
 
     def display_node(self, key: str, value: Any, data_type: str, summary: str):
         """Update inspector with node information."""
@@ -201,6 +259,9 @@ class DetailInspectorWidget(QWidget):
         fg, bg, bd = ThemeManager.get_type_palette(data_type)
 
         self.current_value = value
+        self._current_data_type = data_type
+        self._text_dirty = True
+
         self.title_label.setText(f"{key}")
         self.title_label.setStyleSheet(f"font-size: 11px; font-weight: bold; color: {colors['text_heading']};")
 
@@ -240,22 +301,7 @@ class DetailInspectorWidget(QWidget):
         else:
             self.tab_widget.setTabVisible(0, False)
             self.tab_widget.setCurrentIndex(1)
-
-        # Prepare Raw Text / JSON
-        text_content = ""
-        try:
-            if isinstance(value, (dict, list)):
-                text_content = json.dumps(value, indent=2, ensure_ascii=False, default=str)
-            elif data_type == "DataFrame":
-                text_content = f"Columns: {list(value.columns)}\nShape: {value.shape}\n\nInfo / Types:\n{value.dtypes}\n\nSummary:\n{value.describe()}"
-            elif data_type == "ndarray":
-                text_content = f"ndarray details:\nShape: {value.shape}\nDtype: {value.dtype}\nSize: {value.size}\nNbytes: {value.nbytes} bytes\n\nArray representation:\n{str(value)}"
-            else:
-                text_content = str(value)
-        except Exception as e:
-            text_content = f"<Error inspecting value: {e}>\n{repr(value)}"
-
-        self.text_edit.setPlainText(text_content)
+            self._update_text_content()
 
     def _copy_content(self):
         """Copy current inspector content to clipboard."""
