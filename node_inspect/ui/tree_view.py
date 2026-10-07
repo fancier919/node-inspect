@@ -123,6 +123,7 @@ class NodeTreeView(QTreeView):
 
     node_selected = Signal(str, object, str, str)  # key, raw_value, type, summary
     special_node_expanded = Signal(str)           # triggered message
+    action_triggered = Signal(str)                # user feedback message
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -135,6 +136,13 @@ class NodeTreeView(QTreeView):
         self.clicked.connect(self._on_clicked)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
+
+    def _get_base_dir(self) -> Optional[str]:
+        """Get directory of currently opened file from main window parent if available."""
+        main_win = self.window()
+        if hasattr(main_win, "current_file_path") and main_win.current_file_path:
+            return os.path.dirname(main_win.current_file_path)
+        return None
 
     def _get_node_item(self, index: QModelIndex) -> Optional[NodeItem]:
         if not index.isValid():
@@ -150,12 +158,61 @@ class NodeTreeView(QTreeView):
         if item:
             self.node_selected.emit(item.key, item.raw_value, item.data_type, item.summary)
 
+    def _execute_custom_action(self, action: dict, item: NodeItem):
+        """Execute configured action command replacing placeholders."""
+        import subprocess
+        base_dir = self._get_base_dir()
+        current_file = getattr(self.window(), "current_file_path", "") or ""
+
+        cmd_template = action.get("command", "")
+        if not cmd_template:
+            return
+
+        resolved_path = ConfigManager.resolve_existing_path(item.raw_value, base_dir) or str(item.raw_value)
+
+        # Placeholders
+        cmd = cmd_template.replace("{value}", str(resolved_path))
+        cmd = cmd.replace("{key}", str(item.key))
+        cmd = cmd.replace("{file_path}", str(current_file))
+        cmd = cmd.replace("{base_dir}", str(base_dir or ""))
+
+        try:
+            subprocess.Popen(cmd, shell=True)
+            self.action_triggered.emit(f"Executed: {cmd}")
+        except Exception as e:
+            self.action_triggered.emit(f"Failed to execute action: {e}")
+
+    def _open_in_default_program(self, path: str):
+        """Open file or folder in OS default program."""
+        try:
+            os.startfile(path)
+            self.action_triggered.emit(f"Opened: {os.path.basename(path)}")
+        except Exception as e:
+            self.action_triggered.emit(f"Failed to open '{path}': {e}")
+
     def _on_double_clicked(self, index: QModelIndex):
-        """Trigger lazy expansion for special types (ndarray, DataFrame, etc.)."""
+        """Handle double-click: trigger custom action / default program or lazy expand."""
         item = self._get_node_item(index)
         if not item:
             return
 
+        base_dir = self._get_base_dir()
+
+        # 1. Check if matching custom action is configured
+        matched_action = ConfigManager.find_matching_action(item.key, item.raw_value)
+        if matched_action:
+            self._execute_custom_action(matched_action, item)
+            self.node_selected.emit(item.key, item.raw_value, item.data_type, item.summary)
+            return
+
+        # 2. Check if item value is a valid file or folder path
+        resolved_path = ConfigManager.resolve_existing_path(item.raw_value, base_dir)
+        if resolved_path:
+            self._open_in_default_program(resolved_path)
+            self.node_selected.emit(item.key, item.raw_value, item.data_type, item.summary)
+            return
+
+        # 3. Otherwise standard tree expansion
         model = self.model()
         src_model = model.sourceModel() if isinstance(model, QSortFilterProxyModel) else model
         src_index = model.mapToSource(index) if isinstance(model, QSortFilterProxyModel) else index
@@ -184,11 +241,36 @@ class NodeTreeView(QTreeView):
         if not item:
             return
 
+        base_dir = self._get_base_dir()
+        resolved_path = ConfigManager.resolve_existing_path(item.raw_value, base_dir)
+        matched_action = ConfigManager.find_matching_action(item.key, item.raw_value)
+
         menu = QMenu(self)
+
+        # Context action: Open with Default Program
+        if resolved_path:
+            open_default_action = menu.addAction(f"🚀 Open in Default App ({os.path.basename(resolved_path)})")
+        else:
+            open_default_action = None
+
+        # Context action: Execute Custom Script
+        if matched_action:
+            label = matched_action.get("name") or "⚡ Run Custom Action"
+            custom_action = menu.addAction(label)
+        else:
+            custom_action = None
+
+        if open_default_action or custom_action:
+            menu.addSeparator()
 
         copy_val_action = menu.addAction("Copy Value")
         copy_key_action = menu.addAction("Copy Key Name")
         copy_type_action = menu.addAction("Copy Type")
+        if resolved_path:
+            copy_path_action = menu.addAction("Copy Full Path")
+        else:
+            copy_path_action = None
+
         menu.addSeparator()
 
         expand_all_action = menu.addAction("Expand All")
@@ -197,7 +279,11 @@ class NodeTreeView(QTreeView):
         action = menu.exec(self.viewport().mapToGlobal(pos))
         clipboard = QApplication.clipboard()
 
-        if action == copy_val_action:
+        if open_default_action and action == open_default_action:
+            self._open_in_default_program(resolved_path)
+        elif custom_action and action == custom_action:
+            self._execute_custom_action(matched_action, item)
+        elif action == copy_val_action:
             try:
                 if isinstance(item.raw_value, (dict, list)):
                     clipboard.setText(json.dumps(item.raw_value, indent=2, ensure_ascii=False, default=str))
@@ -209,7 +295,10 @@ class NodeTreeView(QTreeView):
             clipboard.setText(item.key)
         elif action == copy_type_action:
             clipboard.setText(item.data_type)
+        elif copy_path_action and action == copy_path_action:
+            clipboard.setText(resolved_path)
         elif action == expand_all_action:
             self.expandRecursively(index)
         elif action == collapse_all_action:
             self.collapse(index)
+

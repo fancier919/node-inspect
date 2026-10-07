@@ -43,7 +43,13 @@ def get_type_and_summary(value: Any) -> tuple[str, str, bool, bool]:
             return "float", f"{value:.6g}", False, False
         return type(value).__name__, str(value), False, False
 
-    # 4. Check Strings & Bytes
+    # 4. Check Strings & Bytes & Path
+    import pathlib
+    if isinstance(value, (pathlib.Path, pathlib.PurePath)):
+        p_str = str(value)
+        short = p_str if len(p_str) <= 60 else p_str[:57] + "..."
+        return "Path", f'"{short}"', False, False
+
     if isinstance(value, str):
         short = value if len(value) <= 60 else value[:57] + "..."
         return "str", f'"{short}" ({len(value)} chars)', False, False

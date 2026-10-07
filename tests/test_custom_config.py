@@ -91,6 +91,59 @@ class TestCustomConfigAndLoader(unittest.TestCase):
         finally:
             ConfigManager.ensure_config = original_ensure
 
+    def test_pathlib_pickle_and_resolution(self):
+        import pathlib
+        from node_inspect.core.safe_pickle import safe_load_pickle
+        import pickle
+
+        test_file = os.path.join(self.test_dir, "sample.txt")
+        with open(test_file, "w") as f:
+            f.write("hello")
+
+        p = pathlib.Path(test_file)
+        pickled_data = pickle.dumps(p)
+        loaded_p = safe_load_pickle(pickled_data)
+        self.assertIsInstance(loaded_p, pathlib.Path)
+
+        resolved = ConfigManager.resolve_existing_path(loaded_p)
+        self.assertEqual(resolved, os.path.abspath(test_file))
+
+        # Relative path resolution with base_dir
+        rel_resolved = ConfigManager.resolve_existing_path("sample.txt", base_dir=self.test_dir)
+        self.assertEqual(rel_resolved, os.path.abspath(test_file))
+
+    def test_custom_action_matching(self):
+        original_actions = ConfigManager.get_actions
+        try:
+            ConfigManager.get_actions = classmethod(lambda cls: [
+                {
+                    "name": "View Model",
+                    "key": "model_path",
+                    "command": "python view.py {value}"
+                },
+                {
+                    "name": "Run Eval",
+                    "key": "^exp_.*",
+                    "value_pattern": "^active$",
+                    "command": "python eval.py {key}"
+                }
+            ])
+            # Exact key match
+            act1 = ConfigManager.find_matching_action("model_path", "weights.bin")
+            self.assertIsNotNone(act1)
+            self.assertEqual(act1["name"], "View Model")
+
+            # Regex key + value match
+            act2 = ConfigManager.find_matching_action("exp_102", "active")
+            self.assertIsNotNone(act2)
+            self.assertEqual(act2["name"], "Run Eval")
+
+            # Non-matching value
+            act3 = ConfigManager.find_matching_action("exp_102", "disabled")
+            self.assertIsNone(act3)
+        finally:
+            ConfigManager.get_actions = original_actions
+
 
 if __name__ == "__main__":
     unittest.main()

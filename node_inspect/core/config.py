@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 DEFAULT_CONFIG = {
@@ -12,7 +12,8 @@ DEFAULT_CONFIG = {
         "pickle": [".pkl", ".pickle"],
         "csv": [".csv"],
         "yaml": [".yaml", ".yml"],
-    }
+    },
+    "actions": [],
 }
 
 
@@ -99,3 +100,77 @@ class ConfigManager:
         ext = os.path.splitext(clean_path)[1].lower()
         mapping = cls.get_extension_mapping()
         return mapping.get(ext)
+
+    @classmethod
+    def get_actions(cls) -> List[Dict]:
+        """Return configured custom actions list."""
+        config = cls.ensure_config()
+        return config.get("actions", [])
+
+    @classmethod
+    def resolve_existing_path(cls, value: Any, base_dir: Optional[str] = None) -> Optional[str]:
+        """Check if value is a valid existing file/folder path (str or pathlib.Path)."""
+        import pathlib
+        path_str = None
+        if isinstance(value, (pathlib.Path, pathlib.PurePath)):
+            path_str = str(value)
+        elif isinstance(value, str):
+            path_str = value.strip().strip('"').strip("'")
+
+        if not path_str or len(path_str) > 1024 or "\x00" in path_str:
+            return None
+
+        # Check direct existence (absolute or relative to cwd)
+        try:
+            if os.path.exists(path_str):
+                return os.path.abspath(path_str)
+        except Exception:
+            pass
+
+        # Check relative to currently loaded data file's directory
+        if base_dir and not os.path.isabs(path_str):
+            try:
+                candidate = os.path.join(base_dir, path_str)
+                if os.path.exists(candidate):
+                    return os.path.abspath(candidate)
+            except Exception:
+                pass
+
+        return None
+
+    @classmethod
+    def find_matching_action(cls, key: str, value: Any) -> Optional[Dict]:
+        """Find the first matching custom action for a given key and value."""
+        import re
+        val_str = str(value)
+        actions = cls.get_actions()
+
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+
+            k_pattern = action.get("key")
+            v_pattern = action.get("value_pattern")
+
+            # Check key pattern (exact match or regex)
+            if k_pattern:
+                try:
+                    if not (key == k_pattern or re.fullmatch(k_pattern, key)):
+                        continue
+                except Exception:
+                    if key != k_pattern:
+                        continue
+
+            # Check value pattern (if specified)
+            if v_pattern:
+                try:
+                    if not (val_str == v_pattern or re.fullmatch(v_pattern, val_str) or re.search(v_pattern, val_str)):
+                        continue
+                except Exception:
+                    if val_str != v_pattern:
+                        continue
+
+            return action
+
+        return None
+

@@ -56,11 +56,9 @@ pythonw run.py path/to/file.parquet
 
 ---
 
-## 独自拡張子の設定
+## 設定ファイル (`~/.node-inspect/config.json`)
 
-Windows の「既定のプログラム」等で独自拡張子を関連付けて起動する場合、ユーザーホームディレクトリ配下の設定ファイルで拡張子とファイル形式のマッピングを指定できます。
-
-設定ファイルパス: `~/.node-inspect/config.json`（初回起動時に自動生成されます）
+設定ファイルにより、独自拡張子のマッピングおよび特定キー／ファイルパスに対するカスタムアクション（スクリプト実行等）を定義できます。
 
 ```json
 {
@@ -70,9 +68,34 @@ Windows の「既定のプログラム」等で独自拡張子を関連付けて
     "pickle": [".pkl", ".pickle"],
     "csv": [".csv"],
     "yaml": [".yaml", ".yml"]
-  }
+  },
+  "actions": [
+    {
+      "name": "モデル評価スクリプト実行",
+      "key": "model_path",
+      "command": "python C:/tools/eval.py {value}"
+    },
+    {
+      "name": "実験ビューア起動",
+      "key": "^exp_.*",
+      "value_pattern": "^active$",
+      "command": "python C:/tools/viewer.py --exp {key} --file {file_path}"
+    }
+  ]
 }
 ```
+
+### プレースホルダー一覧
+- `{value}`: ノードの値（ファイルパスの場合は絶対パスに解決）
+- `{key}`: ノードのキー名
+- `{file_path}`: 現在開いているファイルのパス
+- `{base_dir}`: 現在開いているファイルの親ディレクトリパス
+
+### アクション実行方法
+1. **ファイルパス（文字列または `pathlib.Path`）:**
+   - ダブルクリック、または右クリックメニューの「🚀 Open in Default App」から Windows の既定プログラムで開くことができます。
+2. **カスタムアクション:**
+   - キーや値が一致するノードをダブルクリック、または右クリックメニューから指定した外部スクリプト・コマンドを起動できます。
 
 ---
 

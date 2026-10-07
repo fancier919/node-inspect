@@ -119,6 +119,7 @@ class MainWindow(QMainWindow):
         # Connect signals
         self.tree_view.node_selected.connect(self._on_node_selected)
         self.tree_view.special_node_expanded.connect(self._on_special_expanded)
+        self.tree_view.action_triggered.connect(lambda msg: self.status_bar.showMessage(msg, 4000))
 
         self.splitter.addWidget(self.tree_view)
 

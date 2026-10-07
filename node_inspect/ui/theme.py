@@ -47,6 +47,7 @@ LIGHT_TYPE_COLORS = {
     "DataFrame": ("#0f766e", "#e6fffa", "#99f6e4"),
     "Series": ("#0f766e", "#e6fffa", "#99f6e4"),
     "Table": ("#0f766e", "#e6fffa", "#99f6e4"),
+    "Path": ("#0284c7", "#f0f9ff", "#bae6fd"),
     "unknown": ("#0969da", "#eff6ff", "#bfdbfe"),
 }
 
@@ -94,6 +95,7 @@ DARK_TYPE_COLORS = {
     "DataFrame": ("#4ec9b0", "#2b2b2b", "#4ec9b0"),
     "Series": ("#4ec9b0", "#2b2b2b", "#4ec9b0"),
     "Table": ("#4ec9b0", "#2b2b2b", "#4ec9b0"),
+    "Path": ("#4fc1ff", "#2b2b2b", "#4fc1ff"),
     "unknown": ("#9cdcfe", "#2b2b2b", "#9cdcfe"),
 }
 

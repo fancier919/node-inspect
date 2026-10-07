@@ -27,6 +27,7 @@ SAFE_MODULES: Set[str] = {
     "fractions",
     "uuid",
     "math",
+    "pathlib",
 }
 
 SAFE_BUILTINS: Set[str] = {
@@ -111,6 +112,12 @@ class SafeUnpickler(pickle.Unpickler):
         if module == "uuid" and name == "UUID":
             import uuid
             return uuid.UUID
+
+        if module == "pathlib":
+            import pathlib
+            if name in ("Path", "PurePath", "PosixPath", "WindowsPath", "PurePosixPath", "PureWindowsPath"):
+                return getattr(pathlib, name)
+            raise PickleSecurityError(module, name)
 
         # Check NumPy
         if self.allow_numpy:
