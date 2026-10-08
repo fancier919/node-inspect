@@ -54,6 +54,20 @@ python run.py path/to/file.parquet
 pythonw run.py path/to/file.parquet
 ```
 
+### 常駐サーバーモード（爆速起動）
+あらかじめバックグラウンドで `pandas` 等をロードした常駐プロセスを待機させておくことで、ファイルを開く際の起動時間を数ミリ秒〜瞬時に短縮できます。
+
+```bash
+# 常駐サーバーをバックグラウンド起動 (スタートアップ等)
+pythonw run.py --server
+
+# サーバー起動中に通常通りファイルを開く (数ミリ秒で即座に新規ウィンドウがポップアップ)
+python run.py path/to/file.parquet
+
+# 常駐サーバーの停止
+python run.py --stop
+```
+
 ---
 
 ## 設定ファイル (`~/.node-inspect/config.json`)
