@@ -17,18 +17,28 @@ def main():
     # High DPI scaling support
     if hasattr(Qt.ApplicationAttribute, "AA_EnableHighDpiScaling"):
         QApplication.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
-    if hasattr(Qt.ApplicationAttribute, "AA_UseHighDpiPixmaps"):
-        QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)
+    # Set Windows AppUserModelID so taskbar displays application icon instead of default python.exe
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("KanekoPy.NodeInspect.Viewer")
+        except Exception:
+            pass
 
     app = QApplication(sys.argv)
     app.setApplicationName("NodeInspect")
     app.setOrganizationName("KanekoPy")
+
+    from node_inspect.ui.app_icon import create_app_icon
+    app_icon = create_app_icon()
+    app.setWindowIcon(app_icon)
 
     # Ensure ~/.node-inspect/config.json exists immediately on startup
     from node_inspect.core.config import ConfigManager
     ConfigManager.ensure_config()
 
     window = MainWindow()
+    window.setWindowIcon(app_icon)
     window.show()
 
     # If file passed as CLI argument, load it directly

@@ -207,11 +207,30 @@ class MainWindow(QMainWindow):
         self.tree_model.set_data(data)
         self.tree_view.expandToDepth(0)
 
+        # Automatically expand custom_metadata for Parquet or structured metadata
+        self._expand_custom_metadata_if_present()
+
         filename = os.path.basename(self.current_file_path)
         self.setWindowTitle(f"NodeInspect - {filename}")
         self.status_bar.showMessage(
             f"Loaded {filename} in {elapsed:.1f} ms | Pickle Security: Safe Whitelist Active"
         )
+
+    def _expand_custom_metadata_if_present(self):
+        """Expand metadata and custom_metadata nodes by default if present."""
+        root = self.tree_model.root_item
+        for r, child in enumerate(root.children):
+            if child.key == "metadata":
+                idx_meta = self.tree_model.createIndex(r, 0, child)
+                self.tree_view.expand(idx_meta)
+                # Expand custom_metadata under metadata
+                for cr, cchild in enumerate(child.children):
+                    if cchild.key == "custom_metadata":
+                        idx_custom = self.tree_model.createIndex(cr, 0, cchild)
+                        self.tree_view.expand(idx_custom)
+            elif child.key == "custom_metadata":
+                idx_custom = self.tree_model.createIndex(r, 0, child)
+                self.tree_view.expand(idx_custom)
 
     def _on_file_load_error(self, title: str, message: str):
         self.loading_indicator.hide_loading()
