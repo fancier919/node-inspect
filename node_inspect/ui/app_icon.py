@@ -1,11 +1,18 @@
-"""Application icon generation for NodeInspect."""
-
+import os
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QFont, QPen, QBrush
 from PySide6.QtCore import Qt, QRectF
 
 
 def create_app_icon(size: int = 64) -> QIcon:
-    """Generate a modern, clean NodeInspect logo icon dynamically."""
+    """Generate or load the modern NodeInspect logo icon."""
+    # Check if pre-rendered .ico exists in assets
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    ico_path = os.path.join(base_dir, "assets", "app_icon.ico")
+    if os.path.isfile(ico_path):
+        icon = QIcon(ico_path)
+        if not icon.isNull():
+            return icon
+
     icon = QIcon()
 
     for s in (16, 24, 32, 48, 64, 128, 256):
