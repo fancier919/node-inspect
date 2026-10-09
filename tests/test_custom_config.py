@@ -41,7 +41,7 @@ class TestCustomConfigAndLoader(unittest.TestCase):
         finally:
             ConfigManager.get_extension_mapping = original_mapping
 
-    def test_custom_parquet_with_mqmeta(self):
+    def test_custom_parquet_with_metadata(self):
         custom_pq_file = os.path.join(self.test_dir, "data.mypq")
         df = pd.DataFrame({"colA": [10, 20, 30], "colB": ["x", "y", "z"]})
         meta = {
@@ -49,7 +49,7 @@ class TestCustomConfigAndLoader(unittest.TestCase):
             "hyperparams": {"batch_size": 32, "lr": 0.001}
         }
         table = pa.Table.from_pandas(df, preserve_index=False)
-        table = table.replace_schema_metadata({b"mqmeta": json.dumps(meta).encode()})
+        table = table.replace_schema_metadata({b"custom_info": json.dumps(meta).encode()})
         pq.write_table(table, custom_pq_file, compression="zstd")
 
         # Mock extension mapping to include .mypq
@@ -61,12 +61,12 @@ class TestCustomConfigAndLoader(unittest.TestCase):
             self.assertIn("metadata", loaded)
             self.assertIn("data", loaded)
 
-            # Check mqmeta decoded and parsed as nested dictionary
+            # Check custom metadata decoded and parsed as nested dictionary
             custom_meta = loaded["metadata"]["custom_metadata"]
-            self.assertIn("mqmeta", custom_meta)
-            self.assertIsInstance(custom_meta["mqmeta"], dict)
-            self.assertEqual(custom_meta["mqmeta"]["hyperparams"]["batch_size"], 32)
-            self.assertEqual(custom_meta["mqmeta"]["hyperparams"]["lr"], 0.001)
+            self.assertIn("custom_info", custom_meta)
+            self.assertIsInstance(custom_meta["custom_info"], dict)
+            self.assertEqual(custom_meta["custom_info"]["hyperparams"]["batch_size"], 32)
+            self.assertEqual(custom_meta["custom_info"]["hyperparams"]["lr"], 0.001)
 
             # Check dataframe content
             self.assertEqual(len(loaded["data"]), 3)

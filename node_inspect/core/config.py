@@ -42,7 +42,7 @@ class ConfigManager:
 
     @classmethod
     def get_extension_mapping(cls) -> Dict[str, str]:
-        """Return a mapping of lowercase extension -> file type (e.g. '.mqmeta' -> 'parquet')."""
+        """Return a mapping of lowercase extension -> file type (e.g. '.mypq' -> 'parquet')."""
         config = cls.ensure_config()
         mapping = {}
         extensions_section = config.get("extensions", {})

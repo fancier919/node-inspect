@@ -49,7 +49,7 @@ class DataLoader:
                 for k, v in raw_meta.items():
                     k_str = k.decode("utf-8", errors="replace") if isinstance(k, bytes) else str(k)
                     v_str = v.decode("utf-8", errors="replace") if isinstance(v, bytes) else str(v)
-                    # Try parsing JSON if applicable (e.g. custom metadata like 'mqmeta' or pandas json)
+                    # Try parsing JSON if applicable (e.g. custom metadata or pandas json)
                     stripped_v = v_str.strip()
                     if (stripped_v.startswith("{") and stripped_v.endswith("}")) or (stripped_v.startswith("[") and stripped_v.endswith("]")):
                         try:
