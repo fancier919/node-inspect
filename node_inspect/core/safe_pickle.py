@@ -1,4 +1,8 @@
-"""Safe pickle deserializer with strict whitelist security enforcement."""
+"""Type-restricted unpickler with basic module allowlisting.
+NOTE: Python pickle deserialization is fundamentally not safe against malicious data.
+This restriction serves only as basic defense-in-depth against accidental arbitrary execution.
+Always treat untrusted pickle files with caution.
+"""
 
 import io
 import pickle
@@ -6,12 +10,12 @@ from typing import Any, Set, Tuple
 
 
 class PickleSecurityError(Exception):
-    """Raised when an unauthorized class or module is encountered during unpickling."""
+    """Raised when an unlisted class or module is encountered during unpickling."""
 
     def __init__(self, module: str, name: str):
         super().__init__(
-            f"Blocked unauthorized module/class in pickle: '{module}.{name}'. "
-            "To prevent arbitrary code execution, only trusted data types are allowed."
+            f"Blocked unlisted module/class in pickle: '{module}.{name}'. "
+            "Only common standard library, NumPy, and Pandas data types are allowed."
         )
         self.module = module
         self.name = name

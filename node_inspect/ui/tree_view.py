@@ -161,8 +161,9 @@ class NodeTreeView(QTreeView):
             self.node_selected.emit(item.key, item.raw_value, item.data_type, item.summary)
 
     def _execute_custom_action(self, action: dict, item: NodeItem):
-        """Execute configured action command replacing placeholders."""
+        """Execute configured action command safely without shell=True to prevent command injection."""
         import subprocess
+        import shlex
         base_dir = self._get_base_dir()
         current_file = getattr(self.window(), "current_file_path", "") or ""
 
@@ -172,15 +173,21 @@ class NodeTreeView(QTreeView):
 
         resolved_path = ConfigManager.resolve_existing_path(item.raw_value, base_dir) or str(item.raw_value)
 
-        # Placeholders
-        cmd = cmd_template.replace("{value}", str(resolved_path))
-        cmd = cmd.replace("{key}", str(item.key))
-        cmd = cmd.replace("{file_path}", str(current_file))
-        cmd = cmd.replace("{base_dir}", str(base_dir or ""))
-
         try:
-            subprocess.Popen(cmd, shell=True)
-            self.action_triggered.emit(f"Executed: {cmd}")
+            # Tokenize command template before inserting variables
+            # Using posix=False on Windows ensures Windows-style quotes and paths are preserved
+            tokens = shlex.split(cmd_template, posix=(sys.platform != "win32"))
+            cmd_args = []
+            for token in tokens:
+                arg = token.replace("{value}", str(resolved_path))
+                arg = arg.replace("{key}", str(item.key))
+                arg = arg.replace("{file_path}", str(current_file))
+                arg = arg.replace("{base_dir}", str(base_dir or ""))
+                cmd_args.append(arg)
+
+            # Execute directly with shell=False preventing shell injection
+            subprocess.Popen(cmd_args, shell=False)
+            self.action_triggered.emit(f"Executed: {' '.join(cmd_args)}")
         except Exception as e:
             self.action_triggered.emit(f"Failed to execute action: {e}")
 

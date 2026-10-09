@@ -212,9 +212,7 @@ class MainWindow(QMainWindow):
 
         filename = os.path.basename(self.current_file_path)
         self.setWindowTitle(f"NodeInspect - {filename}")
-        self.status_bar.showMessage(
-            f"Loaded {filename} in {elapsed:.1f} ms | Pickle Security: Safe Whitelist Active"
-        )
+        self.status_bar.showMessage(f"Loaded {filename} in {elapsed:.1f} ms")
 
     def _expand_custom_metadata_if_present(self):
         """Expand metadata and custom_metadata nodes by default if present."""
