@@ -77,7 +77,7 @@ def generate_samples(output_dir: str = "sample_data"):
 
     table = pa.Table.from_pandas(df, preserve_index=False)
     custom_metadata = {
-        "author": "Kaneko",
+        "author": "DataEngineer",
         "experiment_id": "EXP-2026-10",
         "description": "Industrial sensor time-series benchmark",
         "config": json.dumps({"sampling_rate_hz": 50, "calibration_status": "VALID", "channels": 5}),

@@ -21,7 +21,7 @@ def main():
     if sys.platform == "win32":
         try:
             import ctypes
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("KanekoPy.NodeInspect.Viewer")
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("NodeInspect.Viewer")
         except Exception:
             pass
 
@@ -57,7 +57,7 @@ def main():
     # 3. Otherwise, launch GUI / server
     app = QApplication(sys.argv)
     app.setApplicationName("NodeInspect")
-    app.setOrganizationName("KanekoPy")
+    app.setOrganizationName("NodeInspect")
 
     from node_inspect.ui.app_icon import create_app_icon
     app_icon = create_app_icon()

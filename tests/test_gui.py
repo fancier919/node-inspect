@@ -35,7 +35,7 @@ class TestGuiHeadless(unittest.TestCase):
         self.assertIn("data", pq_data)
         self.assertEqual(len(pq_data["data"]), 100)
         custom_meta = pq_data["metadata"]["custom_metadata"]
-        self.assertEqual(custom_meta["author"], "Kaneko")
+        self.assertEqual(custom_meta["author"], "DataEngineer")
         self.assertEqual(custom_meta["experiment_id"], "EXP-2026-10")
         self.assertIsInstance(custom_meta["config"], dict)  # Parsed JSON
         self.assertEqual(custom_meta["config"]["channels"], 5)
