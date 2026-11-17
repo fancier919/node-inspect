@@ -68,7 +68,7 @@ def main():
     ConfigManager.ensure_config()
 
     from node_inspect.core.server import NodeInspectServer
-    server = NodeInspectServer(app, app_icon)
+    server = NodeInspectServer(app, app_icon, preload=is_server_mode)
 
     # If --server mode without files, just run in background waiting for requests
     # If normal startup, open initial window

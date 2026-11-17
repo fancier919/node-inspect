@@ -69,7 +69,7 @@ class NodeInspectServer(QObject):
     request_open = Signal(str, object)
     request_stop = Signal()
 
-    def __init__(self, app: QApplication, app_icon, parent=None):
+    def __init__(self, app: QApplication, app_icon, preload: bool = True, parent=None):
         super().__init__(parent)
         self.app = app
         self.app_icon = app_icon
@@ -84,12 +84,13 @@ class NodeInspectServer(QObject):
         # Fallback timer ensures the Qt event loop wakes up and drains queued open requests
         # even when running headless with 0 open windows on Windows
         self._poll_timer = QTimer(self)
-        self._poll_timer.setInterval(100)
+        self._poll_timer.setInterval(50)
         self._poll_timer.timeout.connect(self._drain_cmd_queue)
         self._poll_timer.start()
 
-        # Preload heavy libraries before accepting connections
-        self._preload_heavy_libraries()
+        # Preload heavy libraries only when starting as dedicated background daemon
+        if preload:
+            self._preload_heavy_libraries()
 
         # Socket setup
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

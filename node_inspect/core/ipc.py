@@ -20,7 +20,7 @@ def _allow_set_foreground_window(server_pid: int) -> None:
             pass
 
 
-def send_to_server(file_path: Optional[str] = None, timeout: float = 3.0) -> bool:
+def send_to_server(file_path: Optional[str] = None, connect_timeout: float = 0.2, recv_timeout: float = 2.0) -> bool:
     """Send an open file request to the running daemon server.
 
     Returns:
@@ -42,8 +42,9 @@ def send_to_server(file_path: Optional[str] = None, timeout: float = 3.0) -> boo
         _allow_set_foreground_window(server_pid)
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
+        sock.settimeout(connect_timeout)
         sock.connect(("127.0.0.1", port))
+        sock.settimeout(recv_timeout)
 
         payload = {
             "action": "open",
